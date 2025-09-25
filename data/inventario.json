@@ -1,0 +1,18 @@
+{
+    "arroz": {
+        "cantidad": 0,
+        "minimo": 1
+    },
+    "fideos": {
+        "cantidad": 2,
+        "minimo": 1
+    },
+    "shampoo": {
+        "cantidad": 1,
+        "minimo": 1
+    },
+    "detergente": {
+        "cantidad": 2,
+        "minimo": 1
+    }
+}
