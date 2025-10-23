@@ -1,14 +1,15 @@
-import os
 import json
-from tkinter import messagebox
-from inventario import guardar_inventario
+import os
+from data_manager import guardar_inventario, cargar_inventario
 
-DATA_DIR = "data"
+DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 COMPRAS_PATH = os.path.join(DATA_DIR, "compras.json")
+
 
 def cargar_lista_compras():
     """Carga la lista de compras desde el archivo JSON (si no existe, crea una vacía)."""
     if not os.path.exists(COMPRAS_PATH):
+        os.makedirs(DATA_DIR, exist_ok=True)
         with open(COMPRAS_PATH, "w", encoding="utf-8") as f:
             json.dump([], f, indent=4)
         return []
@@ -19,11 +20,13 @@ def cargar_lista_compras():
     except json.JSONDecodeError:
         return []
 
+
 def guardar_lista_compras(lista):
     """Guarda la lista de compras en el archivo JSON."""
     os.makedirs(DATA_DIR, exist_ok=True)
     with open(COMPRAS_PATH, "w", encoding="utf-8") as f:
         json.dump(lista, f, indent=4, ensure_ascii=False)
+
 
 def agregar_a_lista(nombre):
     """Agrega un producto a la lista de compras si no está ya."""
@@ -33,24 +36,40 @@ def agregar_a_lista(nombre):
     if nombre not in lista:
         lista.append(nombre)
         guardar_lista_compras(lista)
-        messagebox.showinfo("Lista de Compras", f"🛒 '{nombre}' agregado a la lista de compras.")
+        print(f"'{nombre}' agregado a la lista de compras.")
     else:
-        messagebox.showinfo("Lista de Compras", f"'{nombre}' ya está en la lista de compras.")
+        print(f"'{nombre}' ya está en la lista de compras.")
 
-def marcar_comprados(inventario):
-    """Marca los productos como comprados, los repone en el inventario y limpia la lista."""
+
+def marcar_comprado_individual(nombre):
+    """Marca un producto individual como comprado y lo repone al mínimo."""
+    inventario = cargar_inventario()
     lista = cargar_lista_compras()
-    if not lista:
-        messagebox.showinfo("Lista de Compras", "No hay productos en la lista de compras.")
-        return
 
-    for producto in lista:
-        if producto not in inventario:
-            inventario[producto] = {"cantidad": 1, "minimo": 1}
-        else:
-            minimo = inventario[producto]["minimo"]
-            inventario[producto]["cantidad"] = minimo
+    nombre = nombre.lower()
+    if nombre in lista:
+        lista.remove(nombre)
+    if nombre in inventario:
+        minimo = inventario[nombre].get("minimo", 1)
+        inventario[nombre]["cantidad"] = minimo
+    else:
+        inventario[nombre] = {"cantidad": 1, "minimo": 1}
 
     guardar_inventario(inventario)
-    guardar_lista_compras([])
-    messagebox.showinfo("Éxito", "✅ Lista de compras vaciada y productos repuestos en inventario.")
+    guardar_lista_compras(lista)
+
+
+def marcar_todos_comprados():
+    """Marca todos los productos como comprados."""
+    inventario = cargar_inventario()
+    lista = cargar_lista_compras()
+
+    for nombre in lista:
+        if nombre in inventario:
+            minimo = inventario[nombre].get("minimo", 1)
+            inventario[nombre]["cantidad"] = minimo
+        else:
+            inventario[nombre] = {"cantidad": 1, "minimo": 1}
+
+    guardar_inventario(inventario)
+    guardar_lista_compras([])  # Limpia la lista después

@@ -1,0 +1,14 @@
+{
+    "azucar": {
+        "cantidad": 1,
+        "minimo": 1
+    },
+    "cocucha": {
+        "cantidad": 1,
+        "minimo": 1
+    },
+    "leche": {
+        "cantidad": 2,
+        "minimo": 1
+    }
+}

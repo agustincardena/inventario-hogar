@@ -1,0 +1,10 @@
+{
+    "arroz": {
+        "cantidad": 1,
+        "minimo": 1
+    },
+    "fideos": {
+        "cantidad": 5,
+        "minimo": 1
+    }
+}
