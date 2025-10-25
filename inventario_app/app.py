@@ -1,5 +1,11 @@
 import tkinter as tk
-from inventario import abrir_inventario
+from pathlib import Path
+import sys
+
+if __package__ is None or __package__ == "":
+    sys.path.append(str(Path(__file__).resolve().parent.parent))
+
+from inventario_app.inventario import abrir_inventario
 
 
 def main():
