@@ -1,11 +1,25 @@
 import tkinter as tk
-from tkinter import messagebox
-from data_manager import cargar_inventario, guardar_inventario
-from compras import (
+from tkinter import messagebox, simpledialog
+
+from pathlib import Path
+import sys
+
+if __package__ is None or __package__ == "":
+    sys.path.append(str(Path(__file__).resolve().parent.parent))
+
+from inventario_app.data_manager import cargar_inventario, guardar_inventario
+from inventario_app.inventory_logic import (
+    InventarioError,
+    agregar_o_actualizar_producto,
+    consumir_producto as consumir_producto_logic,
+    eliminar_producto as eliminar_producto_logic,
+)
+from inventario_app.compras import (
     cargar_lista_compras,
     agregar_a_lista,
     marcar_comprado_individual,
     marcar_todos_comprados,
+    eliminar_de_lista_compras,
 )
 
 
@@ -39,7 +53,7 @@ def abrir_inventario(root):
 
     # --- AGREGAR PRODUCTO ---
     def agregar_producto():
-        nombre = entry_nombre.get().strip().lower()
+        nombre = entry_nombre.get().strip()
         if not nombre:
             messagebox.showwarning("Atención", "Ingresá un nombre de producto.")
             return
@@ -48,21 +62,29 @@ def abrir_inventario(root):
         minimo = entry_minimo.get().strip()
 
         if not cantidad.isdigit() or not minimo.isdigit():
-            messagebox.showwarning("Atención", "Cantidad y mínimo deben ser números.")
+            messagebox.showwarning("Atención", "Cantidad y mínimo deben ser números enteros.")
             return
 
         cantidad = int(cantidad)
         minimo = int(minimo)
-        inv = cargar_inventario()
 
-        if nombre in inv:
-            inv[nombre]["cantidad"] += cantidad
-        else:
-            inv[nombre] = {"cantidad": cantidad, "minimo": minimo}
+        if minimo > cantidad:
+            messagebox.showwarning(
+                "Atención",
+                "El mínimo no puede ser mayor que la cantidad inicial.",
+            )
+            return
+
+        inv = cargar_inventario()
+        try:
+            mensaje, _ = agregar_o_actualizar_producto(inv, nombre, cantidad, minimo)
+        except InventarioError as exc:
+            messagebox.showerror("Error", str(exc))
+            return
 
         guardar_inventario(inv)
         actualizar_lista()
-        messagebox.showinfo("Éxito", f"'{nombre}' agregado o actualizado.")
+        messagebox.showinfo("Éxito", mensaje)
         entry_nombre.delete(0, tk.END)
         entry_cantidad.delete(0, tk.END)
         entry_minimo.delete(0, tk.END)
@@ -75,21 +97,27 @@ def abrir_inventario(root):
             return
 
         item_text = lista.get(seleccionado)
-        nombre = item_text.split(" - ")[0].lower()
+        nombre = item_text.split(" - ")[0]
 
-        inv = cargar_inventario()
-        if nombre not in inv:
-            messagebox.showerror("Error", "El producto no existe.")
+        cantidad = simpledialog.askinteger(
+            "Consumir",
+            f"¿Cuántas unidades de '{nombre}' querés consumir?",
+            minvalue=1,
+            parent=window,
+        )
+        if cantidad is None:
             return
 
-        if inv[nombre]["cantidad"] > 0:
-            inv[nombre]["cantidad"] -= 1
-            if inv[nombre]["cantidad"] <= inv[nombre]["minimo"]:
-                agregar_a_lista(nombre)
-            guardar_inventario(inv)
-            actualizar_lista()
-        else:
-            messagebox.showinfo("Aviso", f"'{nombre}' ya no tiene stock.")
+        inv = cargar_inventario()
+        try:
+            mensaje = consumir_producto_logic(inv, nombre, cantidad)
+        except InventarioError as exc:
+            messagebox.showerror("Error", str(exc))
+            return
+
+        guardar_inventario(inv)
+        actualizar_lista()
+        messagebox.showinfo("Éxito", mensaje)
 
     # --- ELIMINAR PRODUCTO ---
     def eliminar_producto():
@@ -99,14 +127,19 @@ def abrir_inventario(root):
             return
 
         item_text = lista.get(seleccionado)
-        nombre = item_text.split(" - ")[0].lower()
+        nombre = item_text.split(" - ")[0]
 
         inv = cargar_inventario()
-        if nombre in inv:
-            del inv[nombre]
-            guardar_inventario(inv)
-            actualizar_lista()
-            messagebox.showinfo("Eliminado", f"'{nombre}' fue eliminado del inventario.")
+        try:
+            mensaje = eliminar_producto_logic(inv, nombre)
+        except InventarioError as exc:
+            messagebox.showerror("Error", str(exc))
+            return
+
+        guardar_inventario(inv)
+        eliminar_de_lista_compras(nombre.lower())
+        actualizar_lista()
+        messagebox.showinfo("Eliminado", mensaje)
 
     # --- ABRIR LISTA DE COMPRAS ---
     def abrir_lista_compras():
