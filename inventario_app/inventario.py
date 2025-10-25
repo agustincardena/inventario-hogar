@@ -186,6 +186,38 @@ def abrir_inventario(root):
         actualizar_lista()
         messagebox.showinfo("Eliminado", mensaje)
 
+    # --- ABRIR LISTA DE COMPRAS ---
+    def abrir_lista_compras():
+        """Abre una ventana para gestionar la lista de compras."""
+        window_compras = tk.Toplevel(window)
+        window_compras.title("Lista de Compras")
+        window_compras.geometry("400x400")
+
+        lista_compras = tk.Listbox(window_compras, width=40, height=15)
+        lista_compras.pack(pady=10)
+
+        compras = cargar_lista_compras()
+        for item in compras:
+            lista_compras.insert(tk.END, item)
+
+        def marcar_individual():
+            seleccionado = lista_compras.curselection()
+            if not seleccionado:
+                messagebox.showwarning("Atención", "Seleccioná un producto.")
+                return
+            nombre = lista_compras.get(seleccionado)
+            marcar_comprado_individual(nombre)
+            lista_compras.delete(seleccionado)
+            messagebox.showinfo("Hecho", f"'{nombre}' marcado como comprado.")
+
+        def marcar_todos():
+            marcar_todos_comprados()
+            lista_compras.delete(0, tk.END)
+            messagebox.showinfo("Hecho", "Todos los productos marcados como comprados.")
+
+        tk.Button(window_compras, text="Marcar como comprado", command=marcar_individual).pack(pady=5)
+        tk.Button(window_compras, text="Marcar todos", command=marcar_todos).pack(pady=5)
+
     # --- ENTRADAS Y BOTONES ---
     tk.Label(window, text="Producto:").pack()
     entry_nombre = tk.Entry(window, width=25)
