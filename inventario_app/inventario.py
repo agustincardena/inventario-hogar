@@ -23,6 +23,51 @@ from inventario_app.compras import (
 )
 
 
+def abrir_lista_compras(parent):
+    """Abre una ventana para visualizar y administrar la lista de compras."""
+
+    window_compras = tk.Toplevel(parent)
+    window_compras.title("Lista de Compras")
+    window_compras.geometry("400x400")
+
+    lista_compras_widget = tk.Listbox(window_compras, width=40, height=15)
+    lista_compras_widget.pack(pady=10)
+
+    def refrescar_lista():
+        lista_compras_widget.delete(0, tk.END)
+        for item in cargar_lista_compras():
+            lista_compras_widget.insert(tk.END, item)
+
+    refrescar_lista()
+
+    def marcar_individual():
+        seleccionado = lista_compras_widget.curselection()
+        if not seleccionado:
+            messagebox.showwarning("Atención", "Seleccioná un producto.")
+            return
+
+        nombre = lista_compras_widget.get(seleccionado)
+        marcar_comprado_individual(nombre)
+        refrescar_lista()
+        messagebox.showinfo("Hecho", f"'{nombre}' marcado como comprado.")
+
+    def marcar_todos():
+        if lista_compras_widget.size() == 0:
+            messagebox.showinfo("Lista vacía", "No hay productos para marcar.")
+            return
+
+        marcar_todos_comprados()
+        refrescar_lista()
+        messagebox.showinfo("Hecho", "Todos los productos marcados como comprados.")
+
+    tk.Button(
+        window_compras,
+        text="Marcar como comprado",
+        command=marcar_individual,
+    ).pack(pady=5)
+    tk.Button(window_compras, text="Marcar todos", command=marcar_todos).pack(pady=5)
+
+
 def abrir_inventario(root):
     """Abre una ventana separada para gestionar el inventario."""
     window = tk.Toplevel(root)
@@ -189,4 +234,9 @@ def abrir_inventario(root):
     tk.Button(window, text="Agregar/Actualizar", command=agregar_producto, width=20).pack(pady=5)
     tk.Button(window, text="Consumir", command=consumir_producto, width=20).pack(pady=5)
     tk.Button(window, text="Eliminar", command=eliminar_producto, width=20).pack(pady=5)
-    tk.Button(window, text="Ver lista de compras", command=abrir_lista_compras, width=20).pack(pady=5)
+    tk.Button(
+        window,
+        text="Ver lista de compras",
+        command=lambda: abrir_lista_compras(window),
+        width=20,
+    ).pack(pady=5)
